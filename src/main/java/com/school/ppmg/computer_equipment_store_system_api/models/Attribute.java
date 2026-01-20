@@ -4,12 +4,23 @@ import com.school.ppmg.computer_equipment_store_system_api.enums.AttributeDataTy
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.annotations.UpdateTimestamp;
 
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor @Builder
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "attributes")
+@SQLDelete(sql = "UPDATE attributes SET deleted_at = NOW() WHERE id = ?")
+@SQLRestriction("deleted_at IS NULL")
 public class Attribute {
 
     @Id
@@ -34,4 +45,16 @@ public class Attribute {
     @NotNull
     @Column(name = "is_filterable", nullable = false)
     private Boolean isFilterable = false;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 }
+
