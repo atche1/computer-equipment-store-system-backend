@@ -24,6 +24,7 @@ public class CategoryService {
     public CategoryResponse create(CategoryRequest req) {
         String name = req.name().trim();
         String slug = normalizeSlug(req.slug(), name);
+
         boolean isActive = (req.isActive() == null) ? true : req.isActive();
 
         if (categoryRepository.existsBySlug(slug)) {
@@ -68,20 +69,28 @@ public class CategoryService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found: " + id));
 
         String name = req.name().trim();
-        String slug = normalizeSlug(req.slug(), name);
         boolean isActive = (req.isActive() == null) ? category.getIsActive() : req.isActive();
 
-        if (categoryRepository.existsBySlugAndIdNot(slug, id)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Category slug already exists: " + slug);
+        boolean slugProvided = req.slug() != null && !req.slug().trim().isBlank();
+
+        if (slugProvided) {
+            String slug = normalizeSlug(req.slug(), name);
+
+            if (categoryRepository.existsBySlugAndIdNot(slug, id)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Category slug already exists: " + slug);
+            }
+
+            category.setSlug(slug);
         }
+        // ако slug не е подаден -> не го пипаме
 
         category.setName(name);
-        category.setSlug(slug);
         category.setIsActive(isActive);
 
         Category saved = categoryRepository.save(category);
         return toResponse(saved);
     }
+
 
     public void delete(Long id) {
         if (!categoryRepository.existsById(id)) {

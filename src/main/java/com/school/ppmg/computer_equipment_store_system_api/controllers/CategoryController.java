@@ -33,7 +33,7 @@ public class CategoryController {
     }
 
     @GetMapping
-    public Page<CategoryResponse> search(
+    public Page<CategoryResponse> getAll(
             @RequestParam(required = false) String q,
             Pageable pageable
     ) {
