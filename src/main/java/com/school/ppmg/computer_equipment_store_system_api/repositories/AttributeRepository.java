@@ -10,6 +10,9 @@ import java.util.List;
 public interface AttributeRepository extends
         JpaRepository<Attribute, Long>,
         JpaSpecificationExecutor<Attribute> {
+    boolean existsByNameIgnoreCaseAndDeletedAtIsNull(String name);
+
+    boolean existsByNameIgnoreCaseAndDeletedAtIsNullAndIdNot(String name, Long id);
 
 }
 

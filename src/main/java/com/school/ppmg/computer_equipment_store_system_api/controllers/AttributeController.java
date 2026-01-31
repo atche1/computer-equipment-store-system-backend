@@ -32,7 +32,7 @@ public class AttributeController {
     }
 
     @GetMapping
-    public Page<AttributeResponse> search(
+    public Page<AttributeResponse> getAll(
             @RequestParam(required = false) String q,
             @RequestParam(required = false) AttributeDataType dataType,
             @RequestParam(required = false) Boolean filterable,

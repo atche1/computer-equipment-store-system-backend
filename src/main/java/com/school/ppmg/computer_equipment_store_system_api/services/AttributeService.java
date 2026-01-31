@@ -23,14 +23,60 @@ public class AttributeService {
     public AttributeService(AttributeRepository attributeRepository) {
         this.attributeRepository = attributeRepository;
     }
-
     public AttributeResponse create(AttributeRequest req) {
+
+        String name = req.name().trim();
+        AttributeDataType dataType = req.dataType();
+
+        String unit = (req.unit() == null || req.unit().isBlank())
+                ? null
+                : req.unit().trim();
+
+        boolean isFilterable = (req.isFilterable() == null) ? true : req.isFilterable();
+
+        if (attributeRepository.existsByNameIgnoreCaseAndDeletedAtIsNull(name)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Attribute name already exists: " + name
+            );
+        }
+
         Attribute attribute = Attribute.builder()
-                .name(req.name().trim())
-                .dataType(req.dataType())
-                .unit(normalizeNullable(req.unit()))
-                .isFilterable(req.isFilterable() != null ? req.isFilterable() : false)
+                .name(name)
+                .dataType(dataType)
+                .unit(unit)
+                .isFilterable(isFilterable)
                 .build();
+
+        Attribute saved = attributeRepository.save(attribute);
+        return toResponse(saved);
+    }
+    public AttributeResponse update(Long id, AttributeRequest req) {
+
+        Attribute attribute = attributeRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Attribute not found: " + id
+                ));
+
+        String name = req.name().trim();
+
+        if (attributeRepository.existsByNameIgnoreCaseAndDeletedAtIsNullAndIdNot(name, id)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Attribute name already exists: " + name
+            );
+        }
+
+        String unit = (req.unit() == null || req.unit().isBlank())
+                ? null
+                : req.unit().trim();
+
+        boolean isFilterable = (req.isFilterable() == null) ? true : req.isFilterable();
+
+        attribute.setName(name);
+        attribute.setDataType(req.dataType());
+        attribute.setUnit(unit);
+        attribute.setIsFilterable(isFilterable);
 
         Attribute saved = attributeRepository.save(attribute);
         return toResponse(saved);
@@ -60,22 +106,6 @@ public class AttributeService {
         return attributeRepository.findAll(spec, pageable).map(this::toResponse);
     }
 
-    public AttributeResponse update(Long id, AttributeRequest req) {
-        Attribute attribute = attributeRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Attribute not found: " + id));
-
-        attribute.setName(req.name().trim());
-        attribute.setDataType(req.dataType());
-        attribute.setUnit(normalizeNullable(req.unit()));
-
-        if (req.isFilterable() != null) {
-            attribute.setIsFilterable(req.isFilterable());
-        }
-        // ако isFilterable е null -> не го пипаме (запазваме старото)
-
-        Attribute saved = attributeRepository.save(attribute);
-        return toResponse(saved);
-    }
 
     public void delete(Long id) {
         if (!attributeRepository.existsById(id)) {
