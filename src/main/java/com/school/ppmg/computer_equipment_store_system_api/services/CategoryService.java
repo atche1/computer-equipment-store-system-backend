@@ -3,12 +3,15 @@ import com.school.ppmg.computer_equipment_store_system_api.dtos.category.Categor
 import com.school.ppmg.computer_equipment_store_system_api.dtos.category.CategoryResponse;
 import com.school.ppmg.computer_equipment_store_system_api.models.Category;
 import com.school.ppmg.computer_equipment_store_system_api.repositories.CategoryRepository;
+import com.school.ppmg.computer_equipment_store_system_api.repositories.specifications.CategorySpecification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.data.jpa.domain.Specification;
+
 
 import java.util.List;
 @Service
@@ -49,11 +52,14 @@ public class CategoryService {
     }
 
     @Transactional(readOnly = true)
-    public Page<CategoryResponse> search(String q, Pageable pageable) {
-        if (q == null || q.trim().isBlank()) {
-            return categoryRepository.findAll(pageable).map(this::toResponse);
-        }
-        return categoryRepository.findByNameContainingIgnoreCase(q.trim(), pageable).map(this::toResponse);
+    public Page<CategoryResponse> search(String q, Boolean isActive, Pageable pageable) {
+
+        Specification<Category> spec = Specification
+                .where(CategorySpecification.nameContains(q))
+                .and(CategorySpecification.isActiveEquals(isActive));
+
+        return categoryRepository.findAll(spec, pageable)
+                .map(this::toResponse);
     }
 
     @Transactional(readOnly = true)

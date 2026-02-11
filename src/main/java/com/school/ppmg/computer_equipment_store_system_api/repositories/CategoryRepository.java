@@ -1,17 +1,16 @@
 package com.school.ppmg.computer_equipment_store_system_api.repositories;
 
 import com.school.ppmg.computer_equipment_store_system_api.models.Category;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface CategoryRepository extends JpaRepository<Category, Long> {
-    List<Category> findByIsActiveTrueOrderByNameAsc();
+public interface CategoryRepository
+        extends JpaRepository<Category, Long>, JpaSpecificationExecutor<Category> {
 
-    Page<Category> findByNameContainingIgnoreCase(String q, Pageable pageable);
+    List<Category> findByIsActiveTrueOrderByNameAsc();
 
     Optional<Category> findBySlug(String slug);
 
