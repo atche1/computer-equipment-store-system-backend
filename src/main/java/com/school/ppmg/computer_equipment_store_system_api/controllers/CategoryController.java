@@ -35,9 +35,10 @@ public class CategoryController {
     @GetMapping
     public Page<CategoryResponse> getAll(
             @RequestParam(required = false) String q,
+            @RequestParam(required = false) Boolean isActive,
             Pageable pageable
     ) {
-        return categoryService.search(q, pageable);
+        return categoryService.search(q, isActive, pageable);
     }
 
     @GetMapping("/active")
