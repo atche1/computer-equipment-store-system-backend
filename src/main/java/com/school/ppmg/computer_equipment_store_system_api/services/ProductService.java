@@ -67,6 +67,10 @@ public class ProductService {
             BigDecimal minPrice,
             BigDecimal maxPrice,
             Boolean inStock,
+            java.util.List<String> attrText,
+            java.util.List<String> attrNumMin,
+            java.util.List<String> attrNumMax,
+            java.util.List<String> attrBool,
             Pageable pageable
     ) {
         if (minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) {
@@ -81,7 +85,88 @@ public class ProductService {
                 .and(ProductSpecification.priceLte(maxPrice))
                 .and(ProductSpecification.inStock(inStock));
 
+        // TEXT: ["12:Logitech", "13:Black"]
+        if (attrText != null) {
+            for (String token : attrText) {
+                IdText p = parseIdText(token, "attrText");
+                spec = spec.and(ProductSpecification.attrTextContains(p.id(), p.text()));
+            }
+        }
+
+        // NUMBER MIN: ["5:8", "6:2.5"]
+        if (attrNumMin != null) {
+            for (String token : attrNumMin) {
+                IdNum p = parseIdNum(token, "attrNumMin");
+                spec = spec.and(ProductSpecification.attrNumberGte(p.id(), p.num()));
+            }
+        }
+
+        // NUMBER MAX: ["5:32", "6:10"]
+        if (attrNumMax != null) {
+            for (String token : attrNumMax) {
+                IdNum p = parseIdNum(token, "attrNumMax");
+                spec = spec.and(ProductSpecification.attrNumberLte(p.id(), p.num()));
+            }
+        }
+
+        // BOOL: ["9:true", "10:false"]
+        if (attrBool != null) {
+            for (String token : attrBool) {
+                IdBool p = parseIdBool(token, "attrBool");
+                spec = spec.and(ProductSpecification.attrBoolEquals(p.id(), p.value()));
+            }
+        }
+
         return productRepository.findAll(spec, pageable).map(this::toResponse);
+    }
+
+    private record IdText(Long id, String text) {}
+    private record IdNum(Long id, BigDecimal num) {}
+    private record IdBool(Long id, Boolean value) {}
+
+    private IdText parseIdText(String token, String paramName) {
+        if (token == null || token.isBlank() || !token.contains(":")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid " + paramName + " token: " + token);
+        }
+        String[] parts = token.split(":", 2);
+        try {
+            Long id = Long.parseLong(parts[0].trim());
+            String text = parts[1] == null ? null : parts[1].trim();
+            return new IdText(id, text);
+        } catch (Exception ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid " + paramName + " token: " + token);
+        }
+    }
+
+    private IdNum parseIdNum(String token, String paramName) {
+        if (token == null || token.isBlank() || !token.contains(":")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid " + paramName + " token: " + token);
+        }
+        String[] parts = token.split(":", 2);
+        try {
+            Long id = Long.parseLong(parts[0].trim());
+            BigDecimal num = new BigDecimal(parts[1].trim());
+            return new IdNum(id, num);
+        } catch (Exception ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid " + paramName + " token: " + token);
+        }
+    }
+
+    private IdBool parseIdBool(String token, String paramName) {
+        if (token == null || token.isBlank() || !token.contains(":")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid " + paramName + " token: " + token);
+        }
+        String[] parts = token.split(":", 2);
+        try {
+            Long id = Long.parseLong(parts[0].trim());
+            String v = parts[1].trim().toLowerCase();
+            if (!v.equals("true") && !v.equals("false")) {
+                throw new IllegalArgumentException();
+            }
+            return new IdBool(id, Boolean.valueOf(v));
+        } catch (Exception ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid " + paramName + " token: " + token);
+        }
     }
 
     public ProductResponse update(Long id, ProductRequest req) {

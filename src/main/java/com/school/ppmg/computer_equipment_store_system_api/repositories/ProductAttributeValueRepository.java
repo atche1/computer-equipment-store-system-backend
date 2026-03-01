@@ -10,9 +10,11 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 public interface ProductAttributeValueRepository extends JpaRepository<ProductAttributeValue, Long> {
     List<ProductAttributeValue> findByProductId(Long productId);
+    Optional<ProductAttributeValue> findByProductIdAndAttributeId(Long productId, Long attributeId);
 
     @Query("""
         select distinct pav.product from ProductAttributeValue pav
