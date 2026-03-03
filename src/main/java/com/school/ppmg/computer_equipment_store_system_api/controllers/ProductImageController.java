@@ -5,7 +5,9 @@ import com.school.ppmg.computer_equipment_store_system_api.dtos.product_image.Pr
 import com.school.ppmg.computer_equipment_store_system_api.services.ProductImageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -15,6 +17,12 @@ import java.util.List;
 public class ProductImageController {
 
     private final ProductImageService productImageService;
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ProductImageResponse upload(@PathVariable Long productId,
+                                       @RequestPart("file") MultipartFile file,
+                                       @RequestParam(value = "isMain", required = false, defaultValue = "false") boolean isMain) {
+        return productImageService.upload(productId, file, isMain);
+    }
 
     @GetMapping
     public List<ProductImageResponse> list(@PathVariable Long productId) {
