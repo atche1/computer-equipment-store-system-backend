@@ -4,4 +4,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface FileStorageService {
     String saveProductImage(Long productId, MultipartFile file);
+    void deleteByPublicUrl(String imageUrl);
+
 }

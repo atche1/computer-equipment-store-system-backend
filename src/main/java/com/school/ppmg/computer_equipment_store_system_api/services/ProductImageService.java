@@ -35,7 +35,6 @@ public class ProductImageService {
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
 
-    private static final Set<String> ALLOWED = Set.of("image/jpeg", "image/png", "image/webp");
 
     @Transactional
     public ProductImageResponse upload(Long productId, MultipartFile file, Boolean isMain) {
@@ -115,9 +114,13 @@ public class ProductImageService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Image not found: " + imageId));
 
         boolean wasMain = Boolean.TRUE.equals(img.getIsMain());
+        String url = img.getImageUrl();
+
         productImageRepository.delete(img);
 
-        // ако изтрием main – направи първата останала main
+        // ✅ трий файла от диска (ако е локален)
+        fileStorageService.deleteByPublicUrl(url);
+
         if (wasMain) {
             var left = productImageRepository.findByProductIdOrderByIsMainDescIdAsc(productId);
             if (!left.isEmpty()) {

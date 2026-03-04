@@ -2,11 +2,12 @@ package com.school.ppmg.computer_equipment_store_system_api.services;
 
 import com.school.ppmg.computer_equipment_store_system_api.repositories.FileStorageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,7 +19,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class LocalFileStorageService implements FileStorageService {
 
-    private static final Path ROOT = Paths.get("uploads"); // ./uploads
+    @Value("${app.upload.dir:uploads}")
+    private String uploadDir;
+
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
             "image/jpeg", "image/png", "image/webp", "image/gif"
     );
@@ -34,8 +37,10 @@ public class LocalFileStorageService implements FileStorageService {
         String ext = StringUtils.getFilenameExtension(original);
         ext = (ext == null || ext.isBlank()) ? guessExt(contentType) : ext.toLowerCase();
 
-        // uploads/products/{productId}/
-        Path dir = ROOT.resolve("products").resolve(String.valueOf(productId));
+        // {uploadDir}/products/{productId}/
+        Path root = Path.of(uploadDir).toAbsolutePath().normalize();
+        Path dir = root.resolve("products").resolve(String.valueOf(productId));
+
         try {
             Files.createDirectories(dir);
         } catch (IOException e) {
@@ -45,7 +50,7 @@ public class LocalFileStorageService implements FileStorageService {
         String filename = UUID.randomUUID() + "." + ext;
         Path target = dir.resolve(filename).normalize();
 
-        // safety: да не може да излезе извън ROOT
+        // safety: не позволяваме излизане извън root
         if (!target.startsWith(dir)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid file path");
         }
@@ -56,8 +61,31 @@ public class LocalFileStorageService implements FileStorageService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not save file");
         }
 
-        // публичен URL (ще го сервира ResourceHandler)
+        // публичен URL (serves from /uploads/**)
         return "/uploads/products/" + productId + "/" + filename;
+    }
+
+    @Override
+    public void deleteByPublicUrl(String imageUrl) {
+        // трие само локални файлове
+        if (imageUrl == null || imageUrl.isBlank()) return;
+        if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) return;
+        if (!imageUrl.startsWith("/uploads/")) return;
+
+        Path root = Path.of(uploadDir).toAbsolutePath().normalize();
+
+        // imageUrl: /uploads/.... => remove "/uploads/"
+        String relative = imageUrl.substring("/uploads/".length());
+        Path target = root.resolve(relative).normalize();
+
+        // safety
+        if (!target.startsWith(root)) return;
+
+        try {
+            Files.deleteIfExists(target);
+        } catch (IOException ignored) {
+            // може да логнеш warning, но не е критично
+        }
     }
 
     private String guessExt(String contentType) {
