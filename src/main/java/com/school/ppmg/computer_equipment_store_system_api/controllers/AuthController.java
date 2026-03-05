@@ -5,6 +5,7 @@ import com.school.ppmg.computer_equipment_store_system_api.enums.Role;
 import com.school.ppmg.computer_equipment_store_system_api.models.User;
 import com.school.ppmg.computer_equipment_store_system_api.repositories.UserRepository;
 import com.school.ppmg.computer_equipment_store_system_api.security.JwtService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,20 +23,23 @@ public class AuthController {
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public void register(@RequestBody RegisterRequest req) {
-        if (req.email() == null || req.password() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email and password are required");
-        }
-        if (userRepository.existsByEmail(req.email())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
+    public void register(@Valid @RequestBody RegisterRequest req) {
+
+        String email = req.email().trim().toLowerCase();
+
+        if (userRepository.existsByEmail(email)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "An account with this email already exists."
+            );
         }
 
         User u = User.builder()
-                .email(req.email().trim().toLowerCase())
+                .email(email)
                 .passwordHash(passwordEncoder.encode(req.password()))
-                .firstName(req.firstName())
-                .lastName(req.lastName())
-                .phone(req.phone())
+                .firstName(req.firstName().trim())
+                .lastName(req.lastName().trim())
+                .phone(req.phone().trim())
                 .role(Role.CUSTOMER)
                 .enabled(true)
                 .build();
@@ -44,19 +48,30 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public AuthResponse login(@RequestBody LoginRequest req) {
+    public AuthResponse login(@Valid @RequestBody LoginRequest req) {
+
         User u = userRepository.findByEmail(req.email().trim().toLowerCase())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED,
+                        "Invalid email or password."
+                ));
 
         if (!Boolean.TRUE.equals(u.getEnabled())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User disabled");
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Your account is disabled."
+            );
         }
 
         if (!passwordEncoder.matches(req.password(), u.getPasswordHash())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Invalid email or password."
+            );
         }
 
         String token = jwtService.generate(u);
+
         return new AuthResponse(token, u.getRole().name());
     }
 }
