@@ -24,18 +24,27 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // auth
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // public catalog GETs
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/attributes/**").permitAll()
 
-                        // admin
+                        .requestMatchers(HttpMethod.GET, "/api/services/active").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/services/*").permitAll()
+
+                        .requestMatchers(HttpMethod.POST, "/api/services").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/services").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/services/*").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/services/*").hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/api/service-requests").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/service-requests/my/**").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/service-requests").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/service-requests/*/status").hasRole("ADMIN")
+
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                        // logged users
                         .requestMatchers("/api/cart/**").hasAnyRole("CUSTOMER", "ADMIN")
                         .requestMatchers("/api/orders/my/**").hasAnyRole("CUSTOMER", "ADMIN")
                         .requestMatchers("/api/orders/checkout").hasAnyRole("CUSTOMER", "ADMIN")
