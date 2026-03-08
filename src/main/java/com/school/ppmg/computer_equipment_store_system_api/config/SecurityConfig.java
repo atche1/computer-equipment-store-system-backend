@@ -37,6 +37,10 @@ public class SecurityConfig {
 
                         // logged users
                         .requestMatchers("/api/cart/**").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers("/api/orders/my/**").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers("/api/orders/checkout").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/orders").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/orders/*/status").hasRole("ADMIN")
 
                         .anyRequest().permitAll()
                 )
