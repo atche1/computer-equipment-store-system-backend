@@ -1,15 +1,16 @@
 package com.school.ppmg.computer_equipment_store_system_api.services.impl;
 
 import com.school.ppmg.computer_equipment_store_system_api.enums.OrderStatus;
+import com.school.ppmg.computer_equipment_store_system_api.enums.ServiceRequestStatus;
 import com.school.ppmg.computer_equipment_store_system_api.models.Order;
+import com.school.ppmg.computer_equipment_store_system_api.models.ServiceRequest;
 import com.school.ppmg.computer_equipment_store_system_api.services.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.stereotype.Service;
 
-@Service
+@org.springframework.stereotype.Service
 @RequiredArgsConstructor
 public class EmailServiceImpl implements EmailService {
 
@@ -27,13 +28,32 @@ public class EmailServiceImpl implements EmailService {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(from);
         message.setTo(order.getUser().getEmail());
-        message.setSubject(buildSubject(order, newStatus));
-        message.setText(buildBody(order, oldStatus, newStatus));
+        message.setSubject(buildOrderSubject(newStatus));
+        message.setText(buildOrderBody(order, oldStatus, newStatus));
 
         mailSender.send(message);
     }
 
-    private String buildSubject(Order order, OrderStatus newStatus) {
+    @Override
+    public void sendServiceRequestStatusChangedEmail(ServiceRequest serviceRequest,
+                                                     ServiceRequestStatus oldStatus,
+                                                     ServiceRequestStatus newStatus) {
+        if (serviceRequest.getUser() == null
+                || serviceRequest.getUser().getEmail() == null
+                || serviceRequest.getUser().getEmail().isBlank()) {
+            return;
+        }
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(from);
+        message.setTo(serviceRequest.getUser().getEmail());
+        message.setSubject(buildServiceRequestSubject(newStatus));
+        message.setText(buildServiceRequestBody(serviceRequest, oldStatus, newStatus));
+
+        mailSender.send(message);
+    }
+
+    private String buildOrderSubject(OrderStatus newStatus) {
         return switch (newStatus) {
             case SHIPPED -> "Your order has been shipped";
             case DELIVERED -> "Your order has been delivered";
@@ -43,7 +63,7 @@ public class EmailServiceImpl implements EmailService {
         };
     }
 
-    private String buildBody(Order order, OrderStatus oldStatus, OrderStatus newStatus) {
+    private String buildOrderBody(Order order, OrderStatus oldStatus, OrderStatus newStatus) {
         return """
                 Hello %s,
 
@@ -68,6 +88,42 @@ public class EmailServiceImpl implements EmailService {
                 order.getDeliveryPhone(),
                 order.getDeliveryAddress(),
                 order.getTotalAmount()
+        );
+    }
+
+    private String buildServiceRequestSubject(ServiceRequestStatus newStatus) {
+        return switch (newStatus) {
+            case NEW -> "Your service request has been received";
+            case IN_PROGRESS -> "Your service request is in progress";
+            case DONE -> "Your service request has been completed";
+        };
+    }
+
+    private String buildServiceRequestBody(ServiceRequest serviceRequest,
+                                           ServiceRequestStatus oldStatus,
+                                           ServiceRequestStatus newStatus) {
+        String fullName = serviceRequest.getUser().getFirstName() + " " + serviceRequest.getUser().getLastName();
+
+        return """
+            Hello %s,
+
+            Your service request has been updated.
+
+            Service: %s
+            Previous status: %s
+            Current status: %s
+
+            Phone: %s
+            Description: %s
+
+            Thank you.
+            """.formatted(
+                fullName,
+                serviceRequest.getService().getName(),
+                oldStatus,
+                newStatus,
+                serviceRequest.getCustomerPhone(),
+                serviceRequest.getDescription()
         );
     }
 }

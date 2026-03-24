@@ -34,6 +34,8 @@ public class ProductImageService {
     private final FileStorageService fileStorageService;
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
+    @Value("${app.public-base-url}")
+    private String publicBaseUrl;
 
 
     @Transactional
@@ -151,6 +153,26 @@ public class ProductImageService {
     }
 
     private ProductImageResponse toResponse(ProductImage img) {
-        return new ProductImageResponse(img.getId(), img.getImageUrl(), img.getIsMain());
+        return new ProductImageResponse(
+                img.getId(),
+                resolveImageUrl(img.getImageUrl()),
+                img.getIsMain()
+        );
+    }
+
+    private String resolveImageUrl(String imageUrl) {
+        if (!StringUtils.hasText(imageUrl)) {
+            return imageUrl;
+        }
+
+        if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+            return imageUrl;
+        }
+
+        if (imageUrl.startsWith("/")) {
+            return publicBaseUrl + imageUrl;
+        }
+
+        return publicBaseUrl + "/" + imageUrl;
     }
 }
