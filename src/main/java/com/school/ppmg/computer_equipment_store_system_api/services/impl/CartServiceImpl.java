@@ -7,11 +7,9 @@ import com.school.ppmg.computer_equipment_store_system_api.dtos.cart.UpdateCartI
 import com.school.ppmg.computer_equipment_store_system_api.models.Cart;
 import com.school.ppmg.computer_equipment_store_system_api.models.CartItem;
 import com.school.ppmg.computer_equipment_store_system_api.models.Product;
+import com.school.ppmg.computer_equipment_store_system_api.models.ProductImage;
 import com.school.ppmg.computer_equipment_store_system_api.models.User;
-import com.school.ppmg.computer_equipment_store_system_api.repositories.CartItemRepository;
-import com.school.ppmg.computer_equipment_store_system_api.repositories.CartRepository;
-import com.school.ppmg.computer_equipment_store_system_api.repositories.ProductRepository;
-import com.school.ppmg.computer_equipment_store_system_api.repositories.UserRepository;
+import com.school.ppmg.computer_equipment_store_system_api.repositories.*;
 import com.school.ppmg.computer_equipment_store_system_api.services.CartService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -33,6 +31,7 @@ public class CartServiceImpl implements CartService {
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final ProductImageRepository productImageRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -131,13 +130,22 @@ public class CartServiceImpl implements CartService {
         List<CartItemResponse> items = cart.getItems().stream().map(ci -> {
             Product p = ci.getProduct();
             int available = safe(p.getQuantity());
+
+            String imageUrl = productImageRepository
+                    .findByProductIdOrderByIsMainDescIdAsc(p.getId())
+                    .stream()
+                    .findFirst()
+                    .map(ProductImage::getImageUrl)
+                    .orElse(null);
+
             return new CartItemResponse(
                     ci.getId(),
                     p.getId(),
                     p.getName(),
                     p.getPrice(),
                     safe(ci.getQuantity()),
-                    available
+                    available,
+                    imageUrl
             );
         }).toList();
 

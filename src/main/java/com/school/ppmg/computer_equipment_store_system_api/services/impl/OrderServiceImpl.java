@@ -26,6 +26,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import com.school.ppmg.computer_equipment_store_system_api.models.ProductImage;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -197,6 +198,7 @@ public class OrderServiceImpl implements OrderService {
                 oi.getId(),
                 oi.getProduct().getId(),
                 oi.getProductNameSnapshot(),
+                resolveProductImageUrl(oi.getProduct()),
                 oi.getUnitPrice(),
                 oi.getQuantity(),
                 oi.getLineTotal()
@@ -214,10 +216,23 @@ public class OrderServiceImpl implements OrderService {
                 items
         );
     }
-
     private String generateOrderNumber() {
         String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
         int rnd = ThreadLocalRandom.current().nextInt(1000, 9999);
         return "ORD-" + date + "-" + rnd;
+    }
+    private String resolveProductImageUrl(Product product) {
+        if (product == null || product.getImages() == null || product.getImages().isEmpty()) {
+            return null;
+        }
+
+        return product.getImages().stream()
+                .filter(img -> Boolean.TRUE.equals(img.getIsMain()))
+                .map(ProductImage::getImageUrl)
+                .findFirst()
+                .orElseGet(() -> product.getImages().stream()
+                        .map(ProductImage::getImageUrl)
+                        .findFirst()
+                        .orElse(null));
     }
 }
