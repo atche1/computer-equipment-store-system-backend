@@ -31,7 +31,16 @@ public class StoreServiceController {
     }
 
     @GetMapping("/active")
-    public List<ServiceResponse> getAllActive() {
+    public Page<ServiceResponse> getAllActive(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) java.math.BigDecimal minPrice,
+            @RequestParam(required = false) java.math.BigDecimal maxPrice,
+            Pageable pageable
+    ) {
+        return storeServiceService.getAllActive(q, minPrice, maxPrice, pageable);
+    }
+    @GetMapping("/active-list")
+    public List<ServiceResponse> getAllActiveList() {
         return storeServiceService.getAllActive();
     }
 

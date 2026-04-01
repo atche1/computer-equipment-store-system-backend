@@ -22,6 +22,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +34,8 @@ public class CartServiceImpl implements CartService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final ProductImageRepository productImageRepository;
+    @Value("${app.public-base-url}")
+    private String publicBaseUrl;
 
     @Override
     @Transactional(readOnly = true)
@@ -136,6 +140,7 @@ public class CartServiceImpl implements CartService {
                     .stream()
                     .findFirst()
                     .map(ProductImage::getImageUrl)
+                    .map(this::resolveImageUrl)
                     .orElse(null);
 
             return new CartItemResponse(
@@ -213,6 +218,21 @@ public class CartServiceImpl implements CartService {
         Cart saved = cartRepository.save(cart);
         saved.getItems().size();
         return toResponse(saved);
+    }
+    private String resolveImageUrl(String imageUrl) {
+        if (!StringUtils.hasText(imageUrl)) {
+            return imageUrl;
+        }
+
+        if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+            return imageUrl;
+        }
+
+        if (imageUrl.startsWith("/")) {
+            return publicBaseUrl + imageUrl;
+        }
+
+        return publicBaseUrl + "/" + imageUrl;
     }
 
     private int safe(Integer v) {

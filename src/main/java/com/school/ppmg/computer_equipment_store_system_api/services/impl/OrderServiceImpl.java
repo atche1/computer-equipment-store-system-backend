@@ -34,6 +34,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +46,8 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    @Value("${app.public-base-url}")
+    private String publicBaseUrl;
 
     @Override
     @Transactional
@@ -226,7 +230,7 @@ public class OrderServiceImpl implements OrderService {
             return null;
         }
 
-        return product.getImages().stream()
+        String rawUrl = product.getImages().stream()
                 .filter(img -> Boolean.TRUE.equals(img.getIsMain()))
                 .map(ProductImage::getImageUrl)
                 .findFirst()
@@ -234,5 +238,23 @@ public class OrderServiceImpl implements OrderService {
                         .map(ProductImage::getImageUrl)
                         .findFirst()
                         .orElse(null));
+
+        return resolveImageUrl(rawUrl);
+    }
+
+    private String resolveImageUrl(String imageUrl) {
+        if (!StringUtils.hasText(imageUrl)) {
+            return imageUrl;
+        }
+
+        if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+            return imageUrl;
+        }
+
+        if (imageUrl.startsWith("/")) {
+            return publicBaseUrl + imageUrl;
+        }
+
+        return publicBaseUrl + "/" + imageUrl;
     }
 }
