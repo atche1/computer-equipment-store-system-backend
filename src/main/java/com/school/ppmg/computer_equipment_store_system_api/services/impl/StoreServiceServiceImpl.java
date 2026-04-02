@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Component
@@ -20,6 +21,7 @@ import java.util.List;
 public class StoreServiceServiceImpl implements StoreServiceService {
 
     private final ServiceRepository serviceRepository;
+
 
     @Override
     @Transactional
@@ -31,6 +33,13 @@ public class StoreServiceServiceImpl implements StoreServiceService {
         service.setIsActive(request.isActive());
 
         return toResponse(serviceRepository.save(service));
+    }
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ServiceResponse> getAllActive(String q, BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable) {
+        String keyword = (q != null && !q.isBlank()) ? q.trim() : null;
+        return serviceRepository.searchActive(keyword, minPrice, maxPrice, pageable)
+                .map(this::toResponse);
     }
 
     @Override
@@ -45,11 +54,12 @@ public class StoreServiceServiceImpl implements StoreServiceService {
     @Override
     @Transactional(readOnly = true)
     public List<ServiceResponse> getAllActive() {
-        return serviceRepository.findByIsActiveTrueOrderByNameAsc()
+        return serviceRepository.findByIsActiveTrueOrderByCreatedAtDesc()
                 .stream()
                 .map(this::toResponse)
                 .toList();
     }
+
 
     @Override
     @Transactional(readOnly = true)

@@ -7,11 +7,9 @@ import com.school.ppmg.computer_equipment_store_system_api.dtos.cart.UpdateCartI
 import com.school.ppmg.computer_equipment_store_system_api.models.Cart;
 import com.school.ppmg.computer_equipment_store_system_api.models.CartItem;
 import com.school.ppmg.computer_equipment_store_system_api.models.Product;
+import com.school.ppmg.computer_equipment_store_system_api.models.ProductImage;
 import com.school.ppmg.computer_equipment_store_system_api.models.User;
-import com.school.ppmg.computer_equipment_store_system_api.repositories.CartItemRepository;
-import com.school.ppmg.computer_equipment_store_system_api.repositories.CartRepository;
-import com.school.ppmg.computer_equipment_store_system_api.repositories.ProductRepository;
-import com.school.ppmg.computer_equipment_store_system_api.repositories.UserRepository;
+import com.school.ppmg.computer_equipment_store_system_api.repositories.*;
 import com.school.ppmg.computer_equipment_store_system_api.services.CartService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,6 +22,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +33,9 @@ public class CartServiceImpl implements CartService {
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final ProductImageRepository productImageRepository;
+    @Value("${app.public-base-url}")
+    private String publicBaseUrl;
 
     @Override
     @Transactional(readOnly = true)
@@ -131,13 +134,23 @@ public class CartServiceImpl implements CartService {
         List<CartItemResponse> items = cart.getItems().stream().map(ci -> {
             Product p = ci.getProduct();
             int available = safe(p.getQuantity());
+
+            String imageUrl = productImageRepository
+                    .findByProductIdOrderByIsMainDescIdAsc(p.getId())
+                    .stream()
+                    .findFirst()
+                    .map(ProductImage::getImageUrl)
+                    .map(this::resolveImageUrl)
+                    .orElse(null);
+
             return new CartItemResponse(
                     ci.getId(),
                     p.getId(),
                     p.getName(),
                     p.getPrice(),
                     safe(ci.getQuantity()),
-                    available
+                    available,
+                    imageUrl
             );
         }).toList();
 
@@ -205,6 +218,21 @@ public class CartServiceImpl implements CartService {
         Cart saved = cartRepository.save(cart);
         saved.getItems().size();
         return toResponse(saved);
+    }
+    private String resolveImageUrl(String imageUrl) {
+        if (!StringUtils.hasText(imageUrl)) {
+            return imageUrl;
+        }
+
+        if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+            return imageUrl;
+        }
+
+        if (imageUrl.startsWith("/")) {
+            return publicBaseUrl + imageUrl;
+        }
+
+        return publicBaseUrl + "/" + imageUrl;
     }
 
     private int safe(Integer v) {

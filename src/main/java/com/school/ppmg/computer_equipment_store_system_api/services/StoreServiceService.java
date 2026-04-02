@@ -5,6 +5,7 @@ import com.school.ppmg.computer_equipment_store_system_api.dtos.service.ServiceR
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface StoreServiceService {
@@ -20,4 +21,5 @@ public interface StoreServiceService {
     ServiceResponse update(Long id, ServiceRequest request);
 
     void delete(Long id);
+    Page<ServiceResponse> getAllActive(String q, BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable);
 }
