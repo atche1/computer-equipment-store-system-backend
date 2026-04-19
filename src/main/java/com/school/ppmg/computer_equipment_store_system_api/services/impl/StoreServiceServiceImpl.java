@@ -22,7 +22,6 @@ public class StoreServiceServiceImpl implements StoreServiceService {
 
     private final ServiceRepository serviceRepository;
 
-
     @Override
     @Transactional
     public ServiceResponse create(ServiceRequest request) {
@@ -34,10 +33,12 @@ public class StoreServiceServiceImpl implements StoreServiceService {
 
         return toResponse(serviceRepository.save(service));
     }
+
     @Override
     @Transactional(readOnly = true)
     public Page<ServiceResponse> getAllActive(String q, BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable) {
         String keyword = (q != null && !q.isBlank()) ? q.trim() : null;
+
         return serviceRepository.searchActive(keyword, minPrice, maxPrice, pageable)
                 .map(this::toResponse);
     }
@@ -60,15 +61,17 @@ public class StoreServiceServiceImpl implements StoreServiceService {
                 .toList();
     }
 
-
     @Override
     @Transactional(readOnly = true)
-    public Page<ServiceResponse> getAllForAdmin(Boolean isActive, Pageable pageable) {
-        if (isActive == null) {
-            return serviceRepository.findAll(pageable).map(this::toResponse);
-        }
+    public Page<ServiceResponse> getAllForAdmin(String q,
+                                                Boolean isActive,
+                                                BigDecimal minPrice,
+                                                BigDecimal maxPrice,
+                                                Pageable pageable) {
+        String keyword = (q != null && !q.isBlank()) ? q.trim() : null;
 
-        return serviceRepository.findByIsActive(isActive, pageable).map(this::toResponse);
+        return serviceRepository.searchAdmin(keyword, isActive, minPrice, maxPrice, pageable)
+                .map(this::toResponse);
     }
 
     @Override

@@ -16,10 +16,15 @@ public interface StoreServiceService {
 
     List<ServiceResponse> getAllActive();
 
-    Page<ServiceResponse> getAllForAdmin(Boolean isActive, Pageable pageable);
+    Page<ServiceResponse> getAllActive(String q, BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable);
+
+    Page<ServiceResponse> getAllForAdmin(String q,
+                                         Boolean isActive,
+                                         BigDecimal minPrice,
+                                         BigDecimal maxPrice,
+                                         Pageable pageable);
 
     ServiceResponse update(Long id, ServiceRequest request);
 
     void delete(Long id);
-    Page<ServiceResponse> getAllActive(String q, BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable);
 }

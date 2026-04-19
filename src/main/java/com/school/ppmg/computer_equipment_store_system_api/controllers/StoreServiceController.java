@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -33,12 +34,13 @@ public class StoreServiceController {
     @GetMapping("/active")
     public Page<ServiceResponse> getAllActive(
             @RequestParam(required = false) String q,
-            @RequestParam(required = false) java.math.BigDecimal minPrice,
-            @RequestParam(required = false) java.math.BigDecimal maxPrice,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
             Pageable pageable
     ) {
         return storeServiceService.getAllActive(q, minPrice, maxPrice, pageable);
     }
+
     @GetMapping("/active-list")
     public List<ServiceResponse> getAllActiveList() {
         return storeServiceService.getAllActive();
@@ -46,10 +48,13 @@ public class StoreServiceController {
 
     @GetMapping
     public Page<ServiceResponse> getAllForAdmin(
+            @RequestParam(required = false) String q,
             @RequestParam(required = false) Boolean isActive,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
             Pageable pageable
     ) {
-        return storeServiceService.getAllForAdmin(isActive, pageable);
+        return storeServiceService.getAllForAdmin(q, isActive, minPrice, maxPrice, pageable);
     }
 
     @PutMapping("/{id}")
