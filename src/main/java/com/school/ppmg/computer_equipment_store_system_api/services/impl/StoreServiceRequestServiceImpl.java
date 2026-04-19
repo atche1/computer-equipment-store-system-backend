@@ -22,6 +22,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 @Component
 @RequiredArgsConstructor
 public class StoreServiceRequestServiceImpl implements StoreServiceRequestService {
@@ -78,12 +81,33 @@ public class StoreServiceRequestServiceImpl implements StoreServiceRequestServic
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ServiceRequestResponse> getAll(ServiceRequestStatus status, Pageable pageable) {
-        if (status == null) {
-            return serviceRequestRepository.findAll(pageable).map(this::toResponse);
-        }
+    public Page<ServiceRequestResponse> getAll(ServiceRequestStatus status,
+                                               String q,
+                                               Long serviceId,
+                                               LocalDate dateFrom,
+                                               LocalDate dateTo,
+                                               Pageable pageable) {
 
-        return serviceRequestRepository.findByStatus(status, pageable).map(this::toResponse);
+        LocalDateTime createdFrom = dateFrom != null ? dateFrom.atStartOfDay() : null;
+        LocalDateTime createdTo = dateTo != null ? dateTo.plusDays(1).atStartOfDay() : null;
+
+        return serviceRequestRepository.searchAdmin(
+                status,
+                q,
+                serviceId,
+                createdFrom,
+                createdTo,
+                pageable
+        ).map(this::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ServiceRequestResponse getById(Long id) {
+        ServiceRequest serviceRequest = serviceRequestRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Service request not found"));
+
+        return toResponse(serviceRequest);
     }
 
     @Override

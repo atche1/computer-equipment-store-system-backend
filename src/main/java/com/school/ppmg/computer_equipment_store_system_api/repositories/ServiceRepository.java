@@ -50,4 +50,5 @@ public interface ServiceRepository extends JpaRepository<Service, Long> {
                               @Param("minPrice") BigDecimal minPrice,
                               @Param("maxPrice") BigDecimal maxPrice,
                               Pageable pageable);
+
 }
