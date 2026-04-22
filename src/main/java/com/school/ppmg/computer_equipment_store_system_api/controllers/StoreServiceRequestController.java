@@ -11,6 +11,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/service-requests")
@@ -36,9 +38,18 @@ public class StoreServiceRequestController {
     @GetMapping
     public Page<ServiceRequestResponse> getAll(
             @RequestParam(required = false) ServiceRequestStatus status,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Long serviceId,
+            @RequestParam(required = false) LocalDate dateFrom,
+            @RequestParam(required = false) LocalDate dateTo,
             Pageable pageable
     ) {
-        return storeServiceRequestService.getAll(status, pageable);
+        return storeServiceRequestService.getAll(status, q, serviceId, dateFrom, dateTo, pageable);
+    }
+
+    @GetMapping("/{id}")
+    public ServiceRequestResponse getById(@PathVariable Long id) {
+        return storeServiceRequestService.getById(id);
     }
 
     @PutMapping("/{id}/status")

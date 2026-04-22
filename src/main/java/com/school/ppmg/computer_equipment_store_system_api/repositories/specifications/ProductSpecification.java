@@ -77,6 +77,20 @@ public final class ProductSpecification {
             return cb.exists(sq);
         };
     }
+    public static Specification<Product> brandEquals(String brand) {
+        return (root, query, cb) -> {
+            if (brand == null || brand.trim().isBlank()) {
+                return cb.conjunction();
+            }
+
+            String normalized = brand.trim().toLowerCase();
+
+            return cb.or(
+                    cb.equal(cb.lower(root.get("name")), normalized),
+                    cb.like(cb.lower(root.get("name")), normalized + " %")
+            );
+        };
+    }
 
     public static Specification<Product> attrNumberGte(Long attributeId, BigDecimal min) {
         return (root, query, cb) -> {

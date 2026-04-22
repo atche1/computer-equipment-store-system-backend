@@ -64,11 +64,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/orders/checkout").hasAnyRole("CUSTOMER", "ADMIN")
                         .requestMatchers("/api/orders/my/**").hasAnyRole("CUSTOMER", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/orders").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/orders/*").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/orders/*/status").hasRole("ADMIN")
 
                         .requestMatchers(HttpMethod.POST, "/api/service-requests").hasAnyRole("CUSTOMER", "ADMIN")
                         .requestMatchers("/api/service-requests/my/**").hasAnyRole("CUSTOMER", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/service-requests").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/service-requests/*").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/service-requests/*/status").hasRole("ADMIN")
 
                         .anyRequest().authenticated()

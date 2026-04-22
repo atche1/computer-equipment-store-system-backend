@@ -14,8 +14,6 @@ public interface ServiceRepository extends JpaRepository<Service, Long> {
 
     List<Service> findByIsActiveTrueOrderByNameAsc();
 
-    Page<Service> findByIsActive(Boolean isActive, Pageable pageable);
-
     List<Service> findByIsActiveTrueOrderByCreatedAtDesc();
 
     @Query("""
@@ -34,4 +32,23 @@ public interface ServiceRepository extends JpaRepository<Service, Long> {
                                @Param("minPrice") BigDecimal minPrice,
                                @Param("maxPrice") BigDecimal maxPrice,
                                Pageable pageable);
+
+    @Query("""
+        SELECT s
+        FROM Service s
+        WHERE (:isActive IS NULL OR s.isActive = :isActive)
+          AND (
+                :q IS NULL
+                OR LOWER(s.name) LIKE LOWER(CONCAT('%', :q, '%'))
+                OR LOWER(s.description) LIKE LOWER(CONCAT('%', :q, '%'))
+          )
+          AND (:minPrice IS NULL OR s.price >= :minPrice)
+          AND (:maxPrice IS NULL OR s.price <= :maxPrice)
+    """)
+    Page<Service> searchAdmin(@Param("q") String q,
+                              @Param("isActive") Boolean isActive,
+                              @Param("minPrice") BigDecimal minPrice,
+                              @Param("maxPrice") BigDecimal maxPrice,
+                              Pageable pageable);
+
 }

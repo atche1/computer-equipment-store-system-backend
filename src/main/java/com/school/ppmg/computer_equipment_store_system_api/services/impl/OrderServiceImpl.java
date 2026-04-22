@@ -137,6 +137,35 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository.findByUserId(user.getId(), pageable)
                 .map(this::toResponse);
     }
+    @Override
+    @Transactional(readOnly = true)
+    public OrderResponse getOrderById(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+
+        return toResponse(order);
+    }
+    @Override
+    @Transactional(readOnly = true)
+    public Page<OrderResponse> searchAdminOrders(OrderStatus status,
+                                                 String orderNumber,
+                                                 String customerName,
+                                                 LocalDateTime dateFrom,
+                                                 LocalDateTime dateTo,
+                                                 Pageable pageable) {
+
+        String normalizedOrderNumber = StringUtils.hasText(orderNumber) ? orderNumber.trim() : null;
+        String normalizedCustomerName = StringUtils.hasText(customerName) ? customerName.trim() : null;
+
+        return orderRepository.searchAdminOrders(
+                status,
+                normalizedOrderNumber,
+                normalizedCustomerName,
+                dateFrom,
+                dateTo,
+                pageable
+        ).map(this::toResponse);
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -153,11 +182,6 @@ public class OrderServiceImpl implements OrderService {
         return toResponse(order);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public Page<OrderResponse> getAllOrders(Pageable pageable) {
-        return orderRepository.findAll(pageable).map(this::toResponse);
-    }
 
     @Override
     @Transactional

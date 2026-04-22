@@ -67,6 +67,7 @@ public class ProductService {
             BigDecimal minPrice,
             BigDecimal maxPrice,
             Boolean inStock,
+            String brand,
             java.util.List<String> attrText,
             java.util.List<String> attrNumMin,
             java.util.List<String> attrNumMax,
@@ -83,7 +84,8 @@ public class ProductService {
                 .and(ProductSpecification.isActiveEquals(isActive))
                 .and(ProductSpecification.priceGte(minPrice))
                 .and(ProductSpecification.priceLte(maxPrice))
-                .and(ProductSpecification.inStock(inStock));
+                .and(ProductSpecification.inStock(inStock))
+                .and(ProductSpecification.brandEquals(brand));
 
         // TEXT: ["12:Logitech", "13:Black"]
         if (attrText != null) {
