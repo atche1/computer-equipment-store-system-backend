@@ -126,6 +126,11 @@ public class OrderServiceImpl implements OrderService {
         // clear cart
         cart.getItems().clear();
         cartRepository.save(cart);
+        try {
+            emailService.sendOrderCreatedEmail(saved);
+        } catch (Exception ignored) {
+            // не чупим checkout-а, ако имейлът не се изпрати
+        }
 
         return toResponse(saved);
     }

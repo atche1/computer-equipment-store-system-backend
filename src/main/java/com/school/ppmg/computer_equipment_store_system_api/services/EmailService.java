@@ -14,4 +14,7 @@ public interface EmailService {
     void sendServiceRequestStatusChangedEmail(ServiceRequest serviceRequest,
                                               ServiceRequestStatus oldStatus,
                                               ServiceRequestStatus newStatus);
+    void sendOrderCreatedEmail(Order order);
+
+    void sendServiceRequestCreatedEmail(ServiceRequest serviceRequest);
 }
