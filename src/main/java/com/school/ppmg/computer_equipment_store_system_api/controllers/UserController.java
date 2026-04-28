@@ -1,15 +1,17 @@
 package com.school.ppmg.computer_equipment_store_system_api.controllers;
 
+import com.school.ppmg.computer_equipment_store_system_api.dtos.user.ChangePasswordRequest;
 import com.school.ppmg.computer_equipment_store_system_api.dtos.user.MyAccountResponse;
+import com.school.ppmg.computer_equipment_store_system_api.dtos.user.UpdateMyAccountRequest;
 import com.school.ppmg.computer_equipment_store_system_api.models.User;
 import com.school.ppmg.computer_equipment_store_system_api.repositories.UserRepository;
+import com.school.ppmg.computer_equipment_store_system_api.services.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestController
@@ -18,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class UserController {
 
     private final UserRepository userRepository;
+    private final  UserService userService;
 
     @GetMapping("/me")
     public MyAccountResponse getMyAccount() {
@@ -33,6 +36,14 @@ public class UserController {
                 user.getEnabled(),
                 user.getCreatedAt()
         );
+    }
+    @PutMapping("/me")
+    public MyAccountResponse updateMyAccount(@Valid @RequestBody UpdateMyAccountRequest request) {
+        return userService.updateMyAccount(request);
+    }
+    @PutMapping("/change-password")
+    public void changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        userService.changePassword(request);
     }
 
     private User getCurrentUser() {

@@ -53,7 +53,15 @@ public class StoreServiceRequestServiceImpl implements StoreServiceRequestServic
         serviceRequest.setCustomerPhone(request.customerPhone());
         serviceRequest.setDescription(request.description());
 
-        return toResponse(serviceRequestRepository.save(serviceRequest));
+        ServiceRequest saved = serviceRequestRepository.save(serviceRequest);
+
+        try {
+            emailService.sendServiceRequestCreatedEmail(saved);
+        } catch (Exception ignored) {
+            // не чупим create-а, ако имейлът не се изпрати
+        }
+
+        return toResponse(saved);
     }
 
     @Override

@@ -29,6 +29,31 @@ public class EmailServiceImpl implements EmailService {
 
     @Value("${app.store-url:http://localhost:8081}")
     private String storeUrl;
+    @Override
+    public void sendOrderCreatedEmail(Order order) {
+        if (order.getUser() == null || order.getUser().getEmail() == null || order.getUser().getEmail().isBlank()) {
+            return;
+        }
+
+        String subject = "Your order has been confirmed";
+        String html = buildOrderCreatedHtml(order);
+
+        sendHtmlEmail(order.getUser().getEmail(), subject, html);
+    }
+
+    @Override
+    public void sendServiceRequestCreatedEmail(ServiceRequest serviceRequest) {
+        if (serviceRequest.getUser() == null
+                || serviceRequest.getUser().getEmail() == null
+                || serviceRequest.getUser().getEmail().isBlank()) {
+            return;
+        }
+
+        String subject = "Your service request has been confirmed";
+        String html = buildServiceRequestCreatedHtml(serviceRequest);
+
+        sendHtmlEmail(serviceRequest.getUser().getEmail(), subject, html);
+    }
 
     @Override
     public void sendOrderStatusChangedEmail(Order order, OrderStatus oldStatus, OrderStatus newStatus) {
@@ -153,7 +178,7 @@ public class EmailServiceImpl implements EmailService {
                 escapeHtml(safe(order.getDeliveryName())),
                 escapeHtml(safe(order.getDeliveryPhone())),
                 escapeHtml(safe(order.getDeliveryAddress())),
-                escapeHtml(String.valueOf(order.getTotalAmount())),
+                escapeHtml(String.valueOf(order.getTotalAmount()) + " EUR"),
                 storeUrl
         );
 
@@ -216,6 +241,113 @@ public class EmailServiceImpl implements EmailService {
         );
 
         return wrapEmailLayout("Service request updated", content);
+    }
+    private String buildOrderCreatedHtml(Order order) {
+        String customerName = safe(order.getDeliveryName());
+
+        String content = """
+        <h2 style="margin:0 0 16px 0;color:#0d4dad;">Order confirmation</h2>
+        <p style="margin:0 0 16px 0;font-size:15px;color:#374151;">
+            Hello <strong>%s</strong>,
+        </p>
+        <p style="margin:0 0 20px 0;font-size:15px;color:#374151;">
+            Your order has been successfully placed and confirmed.
+        </p>
+
+        <table style="width:100%%;border-collapse:collapse;margin-bottom:20px;">
+            <tr>
+                <td style="padding:10px;border:1px solid #e5e7eb;background:#f9fafb;"><strong>Order number</strong></td>
+                <td style="padding:10px;border:1px solid #e5e7eb;">%s</td>
+            </tr>
+            <tr>
+                <td style="padding:10px;border:1px solid #e5e7eb;background:#f9fafb;"><strong>Status</strong></td>
+                <td style="padding:10px;border:1px solid #e5e7eb;">%s</td>
+            </tr>
+            <tr>
+                <td style="padding:10px;border:1px solid #e5e7eb;background:#f9fafb;"><strong>Delivery name</strong></td>
+                <td style="padding:10px;border:1px solid #e5e7eb;">%s</td>
+            </tr>
+            <tr>
+                <td style="padding:10px;border:1px solid #e5e7eb;background:#f9fafb;"><strong>Delivery phone</strong></td>
+                <td style="padding:10px;border:1px solid #e5e7eb;">%s</td>
+            </tr>
+            <tr>
+                <td style="padding:10px;border:1px solid #e5e7eb;background:#f9fafb;"><strong>Delivery address</strong></td>
+                <td style="padding:10px;border:1px solid #e5e7eb;">%s</td>
+            </tr>
+            <tr>
+                <td style="padding:10px;border:1px solid #e5e7eb;background:#f9fafb;"><strong>Total amount</strong></td>
+                <td style="padding:10px;border:1px solid #e5e7eb;">%s</td>
+            </tr>
+        </table>
+
+        <div style="margin-top:24px;">
+            <a href="%s"
+               style="display:inline-block;padding:12px 22px;background:#0d4dad;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;">
+                Visit our store
+            </a>
+        </div>
+        """.formatted(
+                escapeHtml(customerName),
+                escapeHtml(safe(order.getOrderNumber())),
+                escapeHtml(String.valueOf(order.getStatus())),
+                escapeHtml(safe(order.getDeliveryName())),
+                escapeHtml(safe(order.getDeliveryPhone())),
+                escapeHtml(safe(order.getDeliveryAddress())),
+                escapeHtml(String.valueOf(order.getTotalAmount()) + " EUR"),
+                storeUrl
+        );
+
+        return wrapEmailLayout("Order confirmed", content);
+    }
+    private String buildServiceRequestCreatedHtml(ServiceRequest serviceRequest) {
+        String fullName = safe(serviceRequest.getUser().getFirstName()) + " " + safe(serviceRequest.getUser().getLastName());
+
+        String content = """
+        <h2 style="margin:0 0 16px 0;color:#0d4dad;">Service request confirmation</h2>
+        <p style="margin:0 0 16px 0;font-size:15px;color:#374151;">
+            Hello <strong>%s</strong>,
+        </p>
+        <p style="margin:0 0 20px 0;font-size:15px;color:#374151;">
+            Your service request has been submitted successfully and has been confirmed.
+        </p>
+
+        <table style="width:100%%;border-collapse:collapse;margin-bottom:20px;">
+            <tr>
+                <td style="padding:10px;border:1px solid #e5e7eb;background:#f9fafb;"><strong>Service</strong></td>
+                <td style="padding:10px;border:1px solid #e5e7eb;">%s</td>
+            </tr>
+            <tr>
+                <td style="padding:10px;border:1px solid #e5e7eb;background:#f9fafb;"><strong>Status</strong></td>
+                <td style="padding:10px;border:1px solid #e5e7eb;">%s</td>
+            </tr>
+            <tr>
+                <td style="padding:10px;border:1px solid #e5e7eb;background:#f9fafb;"><strong>Phone</strong></td>
+                <td style="padding:10px;border:1px solid #e5e7eb;">%s</td>
+            </tr>
+            <tr>
+                <td style="padding:10px;border:1px solid #e5e7eb;background:#f9fafb;"><strong>Description</strong></td>
+                <td style="padding:10px;border:1px solid #e5e7eb;">%s</td>
+            </tr>
+        </table>
+
+        <div style="margin-top:24px;">
+            <a href="%s"
+               style="display:inline-block;padding:12px 22px;background:#0d4dad;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;">
+                Open %s
+            </a>
+        </div>
+        """.formatted(
+                escapeHtml(fullName.trim()),
+                escapeHtml(safe(serviceRequest.getService().getName())),
+                escapeHtml(String.valueOf(serviceRequest.getStatus())),
+                escapeHtml(safe(serviceRequest.getCustomerPhone())),
+                escapeHtml(safe(serviceRequest.getDescription())),
+                storeUrl,
+                escapeHtml(storeName)
+        );
+
+        return wrapEmailLayout("Service request confirmed", content);
     }
 
     private String wrapEmailLayout(String title, String content) {
